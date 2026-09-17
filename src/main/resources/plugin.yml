@@ -1,0 +1,23 @@
+name: VoidRpAuth
+version: '${version}'
+main: ru.voidrp.auth.VoidRpAuthPlugin
+api-version: '1.21'
+author: VoidRP
+description: Вход и регистрация через аккаунт VoidRP, окнами Minecraft.
+commands:
+  login:
+    description: Вход в аккаунт VoidRP (для старых клиентов)
+    usage: /login <пароль>
+    aliases: [l]
+  register:
+    description: Регистрация аккаунта VoidRP (для старых клиентов)
+    usage: /register <почта> <пароль>
+    aliases: [reg]
+  vauth:
+    description: Управление входом VoidRP
+    permission: voidrp.auth.admin
+    usage: /vauth reload|unlock <ник>|status <ник>
+permissions:
+  voidrp.auth.admin:
+    description: Админ-команды входа
+    default: op

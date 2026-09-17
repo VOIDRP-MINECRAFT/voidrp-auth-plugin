@@ -1,0 +1,32 @@
+# Вход и регистрация через аккаунт VoidRP.
+backend:
+  # База API без /api/v1.
+  url: "https://api.void-rp.ru"
+  # Значение заголовка X-Game-Auth-Secret этого сервера (админка → Серверы).
+  secret: "CHANGE_ME"
+  # Пусто = сервер по умолчанию. Иначе slug сервера из админки.
+  server-slug: "origins"
+  timeout-ms: 15000
+
+site:
+  # Ссылки в окнах: документы и восстановление пароля.
+  base-url: "https://void-rp.ru"
+  offer-path: "/offer"
+  privacy-path: "/privacy"
+  reset-password-path: "/forgot-password"
+
+login:
+  # Сколько секунд ждать ввода в окне, прежде чем отключить игрока.
+  timeout-seconds: 180
+  # Сколько минут после выхода не спрашивать пароль повторно при том же адресе.
+  session-minutes: 30
+  # Показать окно до попадания в мир (нужен клиент 1.21.6+).
+  # Клиенты постарше получат ввод командами /login и /register.
+  pre-join-dialog: true
+
+launcher:
+  # Мгновенный вход, если лаунчер подключил игру по адресу <билет>.<домен>.
+  ticket-from-hostname: true
+  # Метка рядом с ником у тех, кто зашёл через наш лаунчер.
+  verified-prefix: "&b✔ &r"
+  verified-tab-suffix: "&b ✔"

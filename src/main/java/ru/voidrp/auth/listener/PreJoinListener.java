@@ -54,21 +54,20 @@ public final class PreJoinListener implements Listener {
             return;
         }
 
-        // 1. Players of our launcher never see a window. Two ways to recognise them:
-        //    a ticket carried in the address they connected to (needs a wildcard domain),
-        //    or — the default — the ticket the launcher took for this nickname and address.
-        String ticket = ticketFrom(connection.getVirtualHost(), config);
-        if (ticket != null) {
-            AuthResult consumed = plugin.backend().consumePlayTicket(ticket, nickname);
-            if (consumed.ok()) {
-                plugin.pending().put(nickname, PendingAuth.launcher());
-                return;
-            }
-            plugin.getLogger().info("Билет лаунчера отклонён для " + nickname + ": " + consumed.message());
-        }
+        // 1. Players of our launcher never see a window. The launcher connects the game
+        //    to "<label>.<server host>", so the label read from that address identifies
+        //    the ticket outright; when there is none (no wildcard domain, older
+        //    launcher) we fall back to matching nickname and address.
+        String label = labelFrom(connection.getVirtualHost(), config);
 
-        if (config.launcherTicketByNickname()) {
-            AuthResult launcher = plugin.backend().launcherTicket(nickname, ip);
+        if (config.launcherTicketByNickname() || label != null) {
+            AuthResult launcher = plugin.backend().launcherTicket(nickname, ip, label);
+            if (!launcher.ok()) {
+                // Expected for anyone not using our launcher, so only worth a line when
+                // it is not the plain "no ticket" case.
+                plugin.getLogger().info("Билет лаунчера не подошёл для " + nickname
+                        + " (адрес " + ip + "): " + launcher.message());
+            }
             if (launcher.ok()) {
                 if (launcher.needsConsents() && plugin.dialogsSupported(connection)
                         && !runConsents(connection, config, nickname, ip)) {
@@ -269,11 +268,11 @@ public final class PreJoinListener implements Listener {
     }
 
     /**
-     * Pulls the launcher ticket out of the address the client dialled: the launcher
-     * connects to ``<ticket>.origins.void-rp.ru`` so a vanilla client can carry it
-     * without any mod.
+     * Pulls the launcher's label out of the address the client dialled: the launcher
+     * connects to ``<label>.origins.void-rp.ru`` so a vanilla client carries it without
+     * any mod. Requires a wildcard DNS record for the server's domain.
      */
-    private static String ticketFrom(InetSocketAddress virtualHost, AuthConfig config) {
+    private static String labelFrom(InetSocketAddress virtualHost, AuthConfig config) {
         if (!config.ticketFromHostname() || virtualHost == null) {
             return null;
         }
@@ -286,8 +285,9 @@ public final class PreJoinListener implements Listener {
             return null;
         }
         String candidate = host.substring(0, dot).toLowerCase(Locale.ROOT);
-        // Tickets are long random strings; a plain "play.void-rp.ru" must not look like one.
-        return candidate.length() >= 16 && candidate.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '-')
+        // Labels are 24 hex characters; a plain "play.void-rp.ru" must not look like one.
+        return candidate.length() >= 16 && candidate.length() <= 32
+                && candidate.chars().allMatch(c -> Character.isLetterOrDigit(c) || c == '-')
                 ? candidate
                 : null;
     }

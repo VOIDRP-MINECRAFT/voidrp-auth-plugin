@@ -93,10 +93,11 @@ public final class BackendAuthClient {
      * Asks whether this player is the one our launcher just handed a ticket to.
      * Works on a plain client: the match is by nickname and address, no mod needed.
      */
-    public AuthResult launcherTicket(String nickname, String ip) {
+    public AuthResult launcherTicket(String nickname, String ip, String label) {
         JsonObject body = new JsonObject();
         body.addProperty("minecraft_nickname", nickname);
         if (ip != null) body.addProperty("ip", ip);
+        if (label != null) body.addProperty("label", label);
         return send(request("/server/auth/game/launcher-ticket").POST(json(body)).build(), "проверить билет лаунчера");
     }
 

@@ -54,8 +54,9 @@ public final class PreJoinListener implements Listener {
             return;
         }
 
-        // 1. Our launcher puts a play ticket in the address it connects to, so its
-        //    players never see a window at all.
+        // 1. Players of our launcher never see a window. Two ways to recognise them:
+        //    a ticket carried in the address they connected to (needs a wildcard domain),
+        //    or — the default — the ticket the launcher took for this nickname and address.
         String ticket = ticketFrom(connection.getVirtualHost(), config);
         if (ticket != null) {
             AuthResult consumed = plugin.backend().consumePlayTicket(ticket, nickname);
@@ -64,6 +65,19 @@ public final class PreJoinListener implements Listener {
                 return;
             }
             plugin.getLogger().info("Билет лаунчера отклонён для " + nickname + ": " + consumed.message());
+        }
+
+        if (config.launcherTicketByNickname()) {
+            AuthResult launcher = plugin.backend().launcherTicket(nickname, ip);
+            if (launcher.ok()) {
+                if (launcher.needsConsents() && plugin.dialogsSupported(connection)
+                        && !runConsents(connection, config, nickname, ip)) {
+                    return;
+                }
+                connection.getAudience().closeDialog();
+                plugin.pending().put(nickname, PendingAuth.launcher());
+                return;
+            }
         }
 
         // 2. A player who was here minutes ago (restart, crash, timeout) walks back in —

@@ -18,6 +18,7 @@ public final class AuthConfig {
     private final int loginTimeoutSeconds;
     private final int sessionMinutes;
     private final boolean preJoinDialog;
+    private final boolean ticketByNickname;
     private final boolean ticketFromHostname;
     private final String verifiedPrefix;
     private final String verifiedTabSuffix;
@@ -34,6 +35,7 @@ public final class AuthConfig {
         this.loginTimeoutSeconds = Math.max(30, cfg.getInt("login.timeout-seconds", 180));
         this.sessionMinutes = Math.max(0, cfg.getInt("login.session-minutes", 30));
         this.preJoinDialog = cfg.getBoolean("login.pre-join-dialog", true);
+        this.ticketByNickname = cfg.getBoolean("launcher.ticket-by-nickname", true);
         this.ticketFromHostname = cfg.getBoolean("launcher.ticket-from-hostname", true);
         this.verifiedPrefix = cfg.getString("launcher.verified-prefix", "");
         this.verifiedTabSuffix = cfg.getString("launcher.verified-tab-suffix", "");
@@ -82,6 +84,10 @@ public final class AuthConfig {
 
     public boolean preJoinDialog() {
         return preJoinDialog;
+    }
+
+    public boolean launcherTicketByNickname() {
+        return ticketByNickname;
     }
 
     public boolean ticketFromHostname() {

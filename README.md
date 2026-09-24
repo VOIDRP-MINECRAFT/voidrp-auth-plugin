@@ -1,8 +1,12 @@
-# VoidRP Auth
+<p align="center"><img src=".github/assets/banner.jpg" alt="VoidRP Auth" width="100%"></p>
+
+<div align="center">
 
 [![Build](https://github.com/VOIDRP-MINECRAFT/voidrp-auth-plugin/actions/workflows/build.yml/badge.svg)](https://github.com/VOIDRP-MINECRAFT/voidrp-auth-plugin/actions/workflows/build.yml)
 ![Paper](https://img.shields.io/badge/Paper-26.2-00AF54)
 ![Java](https://img.shields.io/badge/Java-25-ED8B00?logo=openjdk&logoColor=white)
+
+</div>
 
 Вход и регистрация на плагинных серверах VoidRP через аккаунт сайта — нативными окнами
 Minecraft, без AuthMe и без второй базы паролей.

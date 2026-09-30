@@ -114,6 +114,30 @@ public final class BackendAuthClient {
         return send(request("/server/auth/consume-play-ticket").POST(json(body)).build(), "проверить билет лаунчера");
     }
 
+    /**
+     * Tells the admin panel the login module is alive (POST /game-sync/heartbeat). Quiet: a
+     * failed beat is not worth a log line every 30 s — the panel shows the silence instead.
+     */
+    public void heartbeat(String version, String core, boolean configured) {
+        JsonObject body = new JsonObject();
+        body.addProperty("plugin", "VoidRpAuth");
+        body.addProperty("version", version);
+        body.addProperty("core", core == null ? null : core.length() > 160 ? core.substring(0, 160) : core);
+        JsonObject modules = new JsonObject();
+        JsonObject auth = new JsonObject();
+        auth.addProperty("ok", configured);
+        if (!configured) auth.addProperty("detail", "backend.secret не задан — вход не проверяется");
+        modules.add("auth", auth);
+        body.add("modules", modules);
+        try {
+            http.send(request("/game-sync/heartbeat").POST(json(body)).build(), HttpResponse.BodyHandlers.discarding());
+        } catch (InterruptedException exc) {
+            Thread.currentThread().interrupt();
+        } catch (Exception ignored) {
+            // the panel sees the missing beat
+        }
+    }
+
     private HttpRequest.Builder request(String path) {
         AuthConfig cfg = config.get();
         HttpRequest.Builder builder = HttpRequest.newBuilder()

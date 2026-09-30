@@ -61,6 +61,21 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
             getLogger().severe("backend.secret не задан в config.yml — вход не будет проверяться!");
         }
         getLogger().info("VoidRpAuth включён. Окна входа: " + (config.preJoinDialog() ? "до входа в мир" : "выключены"));
+        startHeartbeat();
+    }
+
+    /** Every 30 s: the admin panel counts the login module as working (required on partner servers). */
+    private void startHeartbeat() {
+        Runnable beat = () -> {
+            if (config.isConfigured()) {
+                backend.heartbeat(getDescription().getVersion(), getServer().getName() + " " + getServer().getVersion(), true);
+            }
+        };
+        if (FOLIA) {
+            getServer().getAsyncScheduler().runAtFixedRate(this, t -> beat.run(), 10, 30, java.util.concurrent.TimeUnit.SECONDS);
+        } else {
+            getServer().getScheduler().runTaskTimerAsynchronously(this, beat, 20L * 10, 20L * 30);
+        }
     }
 
     @Override

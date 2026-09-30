@@ -64,7 +64,10 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
         startHeartbeat();
     }
 
-    /** Every 30 s: the admin panel counts the login module as working (required on partner servers). */
+    /**
+     * Every 30 s: the admin panel counts the login module as working (required on partner
+     * servers). Every 60 s: the login settings from the admin («Авторизация»).
+     */
     private void startHeartbeat() {
         Runnable beat = () -> {
             if (config.isConfigured()) {
@@ -73,8 +76,33 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
         };
         if (FOLIA) {
             getServer().getAsyncScheduler().runAtFixedRate(this, t -> beat.run(), 10, 30, java.util.concurrent.TimeUnit.SECONDS);
+            getServer().getAsyncScheduler().runAtFixedRate(this, t -> pullSettings(), 1, 60, java.util.concurrent.TimeUnit.SECONDS);
         } else {
             getServer().getScheduler().runTaskTimerAsynchronously(this, beat, 20L * 10, 20L * 30);
+            getServer().getScheduler().runTaskTimerAsynchronously(this, this::pullSettings, 20L, 20L * 60);
+        }
+    }
+
+    private volatile String lastSettings;
+
+    /** Takes «Авторизация» from the admin panel; keeps the current values when it does not answer. */
+    public void pullSettings() {
+        if (!config.isConfigured()) {
+            return;
+        }
+        com.google.gson.JsonObject s = backend.authSettings();
+        if (s == null || !s.has("auth_grace_seconds")) {
+            return;
+        }
+        int grace = s.get("auth_grace_seconds").getAsInt();
+        int reconnect = s.has("reconnect_grant_minutes") ? s.get("reconnect_grant_minutes").getAsInt() : config.sessionMinutes();
+        long timeout = s.has("request_timeout_ms") ? s.get("request_timeout_ms").getAsLong() : config.requestTimeout().toMillis();
+        config.applyLive(grace, reconnect, timeout);
+        String now = "окно входа " + config.loginTimeoutSeconds() + " с, без пароля после выхода " + config.sessionMinutes()
+                + " мин, ожидание сайта " + config.requestTimeout().toMillis() + " мс";
+        if (!now.equals(lastSettings)) {
+            getLogger().info("Настройки входа из админки: " + now);
+            lastSettings = now;
         }
     }
 

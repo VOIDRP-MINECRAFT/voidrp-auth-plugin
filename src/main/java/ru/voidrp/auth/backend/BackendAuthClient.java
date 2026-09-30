@@ -138,6 +138,20 @@ public final class BackendAuthClient {
         }
     }
 
+    /** Login settings of this server from the admin panel, or null when the backend did not answer. */
+    public JsonObject authSettings() {
+        try {
+            HttpResponse<String> response = http.send(request("/server/auth/settings").GET().build(),
+                    HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return response.statusCode() / 100 == 2 ? parse(response.body()) : null;
+        } catch (InterruptedException exc) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception exc) {
+            return null;
+        }
+    }
+
     private HttpRequest.Builder request(String path) {
         AuthConfig cfg = config.get();
         HttpRequest.Builder builder = HttpRequest.newBuilder()

@@ -58,8 +58,28 @@ public final class AuthConfig {
         return serverSlug;
     }
 
+    // Values from the admin panel (GET /server/auth/settings, polled every minute) override the
+    // file; the file stays the fallback while the backend has not answered.
+    private volatile Integer liveLoginSeconds;
+    private volatile Integer liveSessionMinutes;
+    private volatile Duration liveRequestTimeout;
+
+    /**
+     * Applies the admin's login settings. The auth-bridge mod reads the same ones; here
+     * {@code auth_grace_seconds} is how long the login window waits (0 — "no limit" there —
+     * becomes an hour: a window cannot wait forever), {@code reconnect_grant_minutes} how long
+     * a player who left is let back without the password, and the request timeout is capped
+     * at a minute so the window never hangs longer.
+     */
+    public void applyLive(int graceSeconds, int reconnectMinutes, long requestTimeoutMs) {
+        this.liveLoginSeconds = graceSeconds <= 0 ? 3600 : Math.max(30, graceSeconds);
+        this.liveSessionMinutes = Math.max(0, reconnectMinutes);
+        this.liveRequestTimeout = Duration.ofMillis(Math.max(1000, Math.min(60_000, requestTimeoutMs)));
+    }
+
     public Duration requestTimeout() {
-        return requestTimeout;
+        Duration live = liveRequestTimeout;
+        return live != null ? live : requestTimeout;
     }
 
     public String offerUrl() {
@@ -75,11 +95,13 @@ public final class AuthConfig {
     }
 
     public int loginTimeoutSeconds() {
-        return loginTimeoutSeconds;
+        Integer live = liveLoginSeconds;
+        return live != null ? live : loginTimeoutSeconds;
     }
 
     public int sessionMinutes() {
-        return sessionMinutes;
+        Integer live = liveSessionMinutes;
+        return live != null ? live : sessionMinutes;
     }
 
     public boolean preJoinDialog() {

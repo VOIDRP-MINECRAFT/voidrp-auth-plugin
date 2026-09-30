@@ -126,6 +126,7 @@ public final class AuthCommands implements CommandExecutor, TabCompleter {
         switch (args[0].toLowerCase()) {
             case "reload" -> {
                 plugin.reloadPluginConfig();
+                plugin.runAsync(plugin::pullSettings);   // the admin's login settings again
                 sender.sendMessage(Component.text("Конфиг перечитан.", NamedTextColor.GREEN));
             }
             case "unlock" -> {

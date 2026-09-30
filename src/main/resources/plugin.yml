@@ -2,6 +2,9 @@ name: VoidRpAuth
 version: '${version}'
 main: ru.voidrp.auth.VoidRpAuthPlugin
 api-version: '1.21'
+# Runs on Folia too: the login flow is in the async configuration phase, player work goes
+# through the player's scheduler.
+folia-supported: true
 author: VoidRP
 description: Вход и регистрация через аккаунт VoidRP, окнами Minecraft.
 commands:

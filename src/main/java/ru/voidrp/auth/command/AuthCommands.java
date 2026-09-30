@@ -55,7 +55,7 @@ public final class AuthCommands implements CommandExecutor, TabCompleter {
         String ip = ip(player);
         plugin.runAsync(() -> {
             AuthResult result = plugin.backend().login(player.getName(), password, ip);
-            plugin.runSync(() -> {
+            plugin.runFor(player, () -> {
                 if (!player.isOnline()) {
                     return;
                 }
@@ -98,7 +98,7 @@ public final class AuthCommands implements CommandExecutor, TabCompleter {
         plugin.runAsync(() -> {
             AuthResult result = plugin.backend().register(
                     player.getName(), email, password, true, true, true, true, false, ip);
-            plugin.runSync(() -> {
+            plugin.runFor(player, () -> {
                 if (!player.isOnline()) {
                     return;
                 }

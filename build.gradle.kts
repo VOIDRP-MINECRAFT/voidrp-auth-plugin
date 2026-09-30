@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "ru.voidrp"
-version = "1.0.0"
+version = "1.1.0"
 
 java {
     // Paper 26.2 ships Java 25 bytecode, so the plugin has to be built on 25 too.
@@ -36,6 +36,8 @@ tasks.build {
 }
 
 tasks.processResources {
+    // Without this Gradle keeps a plugin.yml built for the previous version.
+    inputs.property("version", project.version)
     filesMatching("plugin.yml") {
         expand("version" to project.version)
     }

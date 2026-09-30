@@ -156,18 +156,46 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
 
     /** Kicks a player who never logged in after the grace period, for the chat fallback. */
     public void startLoginTimeout(Player player) {
-        getServer().getScheduler().runTaskLater(this, () -> {
+        Runnable check = () -> {
             if (player.isOnline() && !sessions.isAuthenticated(player.getUniqueId())) {
                 player.kick(Component.text("Вы не вошли вовремя. Зайдите заново.", NamedTextColor.RED));
             }
-        }, config.loginTimeoutSeconds() * 20L);
+        };
+        long ticks = Math.max(1L, config.loginTimeoutSeconds() * 20L);
+        if (FOLIA) {
+            player.getScheduler().runDelayed(this, t -> check.run(), null, ticks);
+        } else {
+            getServer().getScheduler().runTaskLater(this, check, ticks);
+        }
+    }
+
+    // Folia (partner servers) has no main thread and refuses the Bukkit scheduler: there a
+    // player's work runs on the player's own scheduler and background work on the async one.
+    static final boolean FOLIA = classExists("io.papermc.paper.threadedregions.RegionizedServer");
+
+    private static boolean classExists(String name) {
+        try {
+            Class.forName(name);
+            return true;
+        } catch (ClassNotFoundException exc) {
+            return false;
+        }
     }
 
     public void runAsync(Runnable task) {
-        getServer().getScheduler().runTaskAsynchronously(this, task);
+        if (FOLIA) {
+            getServer().getAsyncScheduler().runNow(this, t -> task.run());
+        } else {
+            getServer().getScheduler().runTaskAsynchronously(this, task);
+        }
     }
 
-    public void runSync(Runnable task) {
-        getServer().getScheduler().runTask(this, task);
+    /** Runs on the thread that owns the player (the main thread, or its region on Folia). */
+    public void runFor(Player player, Runnable task) {
+        if (FOLIA) {
+            player.getScheduler().run(this, t -> task.run(), null);
+        } else {
+            getServer().getScheduler().runTask(this, task);
+        }
     }
 }

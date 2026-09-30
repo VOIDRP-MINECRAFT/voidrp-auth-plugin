@@ -35,7 +35,12 @@ public final class BackendAuthClient {
     public BackendAuthClient(Supplier<AuthConfig> config, Logger logger) {
         this.config = config;
         this.logger = logger;
-        this.http = HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(10)).build();
+        // HTTP/1.1: over plain http a partner may point the plugin at, Java's h2c upgrade on a
+        // POST loses the body behind some servers (uvicorn answers 422); TLS is unaffected.
+        this.http = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofSeconds(10))
+                .build();
     }
 
     public AuthResult accountState(String nickname) {

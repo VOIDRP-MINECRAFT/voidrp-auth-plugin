@@ -67,7 +67,60 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
             getLogger().severe("backend.secret не задан в config.yml — вход не будет проверяться!");
         }
         getLogger().info("VoidRpAuth включён. Окна входа: " + (config.preJoinDialog() ? "до входа в мир" : "выключены"));
+        restoreReloadHandoff();
         startHeartbeat();
+    }
+
+    /**
+     * A reload (PlugMan, /reload) wipes the in-memory sessions while players stay online, and
+     * everyone would be locked until they typed the password again. On disable the players who
+     * were in are written down; an enable within two minutes lets exactly them back in. After
+     * a real restart nobody is online at enable, so the note is just dropped.
+     */
+    private java.io.File handoffFile() {
+        return new java.io.File(getDataFolder(), "reload-handoff.txt");
+    }
+
+    private void writeReloadHandoff() {
+        StringBuilder out = new StringBuilder();
+        for (Player player : getServer().getOnlinePlayers()) {
+            if (sessions.isAuthenticated(player.getUniqueId())) {
+                out.append(player.getUniqueId()).append('|').append(sessions.isVerifiedClient(player.getUniqueId())).append('\n');
+            }
+        }
+        try {
+            java.nio.file.Files.writeString(handoffFile().toPath(), out.toString());
+        } catch (java.io.IOException exc) {
+            getLogger().warning("Не удалось записать сессии перед перезагрузкой: " + exc.getMessage());
+        }
+    }
+
+    private void restoreReloadHandoff() {
+        java.io.File file = handoffFile();
+        if (!file.isFile()) {
+            return;
+        }
+        try {
+            boolean fresh = System.currentTimeMillis() - file.lastModified() < 120_000L;
+            int restored = 0;
+            if (fresh) {
+                for (String line : java.nio.file.Files.readAllLines(file.toPath())) {
+                    String[] parts = line.split("\\|");
+                    if (parts.length < 2) continue;
+                    Player player = getServer().getPlayer(java.util.UUID.fromString(parts[0]));
+                    if (player == null) continue;
+                    boolean fromLauncher = Boolean.parseBoolean(parts[1]);
+                    sessions.markAuthenticated(player.getUniqueId(), player.getName(), null, fromLauncher, 0);
+                    if (fromLauncher) applyVerifiedMark(player);
+                    restored++;
+                }
+            }
+            if (restored > 0) getLogger().info("После перезагрузки возвращён вход " + restored + " игрокам.");
+        } catch (Exception exc) {
+            getLogger().warning("Не удалось вернуть сессии после перезагрузки: " + exc.getMessage());
+        } finally {
+            file.delete();
+        }
     }
 
     /**
@@ -114,6 +167,7 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        writeReloadHandoff();
         pending.clear();
     }
 

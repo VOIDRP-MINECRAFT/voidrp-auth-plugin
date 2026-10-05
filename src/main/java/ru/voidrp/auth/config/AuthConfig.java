@@ -22,6 +22,8 @@ public final class AuthConfig {
     private final boolean ticketFromHostname;
     private final String verifiedPrefix;
     private final String verifiedTabSuffix;
+    private final boolean skinsEnabled;
+    private final Duration skinPreLoginWait;
 
     public AuthConfig(FileConfiguration cfg) {
         this.backendUrl = stripTrailingSlash(cfg.getString("backend.url", "https://api.void-rp.ru"));
@@ -39,6 +41,18 @@ public final class AuthConfig {
         this.ticketFromHostname = cfg.getBoolean("launcher.ticket-from-hostname", true);
         this.verifiedPrefix = cfg.getString("launcher.verified-prefix", "");
         this.verifiedTabSuffix = cfg.getString("launcher.verified-tab-suffix", "");
+        this.skinsEnabled = cfg.getBoolean("skins.enabled", true);
+        this.skinPreLoginWait = Duration.ofMillis(Math.max(500, Math.min(10_000, cfg.getInt("skins.prelogin-wait-ms", 3000))));
+    }
+
+    /** Show the skin from the VoidRP account (signed by the backend) instead of a plain one. */
+    public boolean skinsEnabled() {
+        return skinsEnabled;
+    }
+
+    /** How long a login may wait for the skin before going on without it. */
+    public Duration skinPreLoginWait() {
+        return skinPreLoginWait;
     }
 
     private static String stripTrailingSlash(String value) {

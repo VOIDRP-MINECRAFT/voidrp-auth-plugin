@@ -16,6 +16,10 @@ commands:
     description: Регистрация аккаунта VoidRP (для старых клиентов)
     usage: /register <почта> <пароль>
     aliases: [reg]
+  skin:
+    description: Подтянуть скин из аккаунта VoidRP (после смены в лаунчере или на сайте)
+    usage: /skin
+    aliases: [скин, skinrefresh]
   vauth:
     description: Управление входом VoidRP
     permission: voidrp.auth.admin

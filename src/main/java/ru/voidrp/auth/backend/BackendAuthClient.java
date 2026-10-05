@@ -138,6 +138,25 @@ public final class BackendAuthClient {
         }
     }
 
+    /**
+     * The player's skin as a Mojang-signed {@code textures} property ({@code textures_value},
+     * {@code textures_signature}, {@code textures_source}), or null when the backend did not
+     * answer in time. The property is absent while the backend is still signing the skin.
+     */
+    public JsonObject playerSkin(String nickname, Duration timeout) {
+        try {
+            HttpRequest request = request("/server/auth/player-skin/" + URLEncoder.encode(nickname, StandardCharsets.UTF_8))
+                    .timeout(timeout).GET().build();
+            HttpResponse<String> response = http.send(request, HttpResponse.BodyHandlers.ofString(StandardCharsets.UTF_8));
+            return response.statusCode() / 100 == 2 ? parse(response.body()) : null;
+        } catch (InterruptedException exc) {
+            Thread.currentThread().interrupt();
+            return null;
+        } catch (Exception exc) {
+            return null;
+        }
+    }
+
     /** Login settings of this server from the admin panel, or null when the backend did not answer. */
     public JsonObject authSettings() {
         try {

@@ -18,6 +18,7 @@ import ru.voidrp.auth.listener.LimboListener;
 import ru.voidrp.auth.listener.PreJoinListener;
 import ru.voidrp.auth.session.AuthSessions;
 import ru.voidrp.auth.session.PendingAuth;
+import ru.voidrp.auth.skin.SkinService;
 
 /**
  * Login and registration against the VoidRP site account, shown as native Minecraft
@@ -48,6 +49,11 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
 
         getServer().getPluginManager().registerEvents(new PreJoinListener(this), this);
         getServer().getPluginManager().registerEvents(new LimboListener(this), this);
+        SkinService skins = new SkinService(this);
+        getServer().getPluginManager().registerEvents(skins, this);
+        if (getCommand("skin") != null) {
+            getCommand("skin").setExecutor(skins);
+        }
 
         AuthCommands commands = new AuthCommands(this);
         for (String name : new String[] {"login", "register", "vauth"}) {
@@ -230,6 +236,14 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
             getServer().getAsyncScheduler().runNow(this, t -> task.run());
         } else {
             getServer().getScheduler().runTaskAsynchronously(this, task);
+        }
+    }
+
+    public void runAsyncLater(Runnable task, long seconds) {
+        if (FOLIA) {
+            getServer().getAsyncScheduler().runDelayed(this, t -> task.run(), seconds, java.util.concurrent.TimeUnit.SECONDS);
+        } else {
+            getServer().getScheduler().runTaskLaterAsynchronously(this, task, 20L * seconds);
         }
     }
 

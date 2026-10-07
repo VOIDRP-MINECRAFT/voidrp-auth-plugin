@@ -4,7 +4,7 @@ plugins {
 }
 
 group = "ru.voidrp"
-version = "1.4.0"
+version = "1.5.0"
 
 java {
     // Paper 26.2 ships Java 25 bytecode, so the plugin has to be built on 25 too.

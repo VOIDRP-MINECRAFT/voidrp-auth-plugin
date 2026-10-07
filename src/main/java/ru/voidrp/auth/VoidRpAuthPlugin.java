@@ -202,6 +202,34 @@ public final class VoidRpAuthPlugin extends JavaPlugin {
      * joining through it; without ViaVersion everyone is assumed modern, since the
      * server itself only accepts 26.2 clients then.
      */
+    /** Channel our client mod (VoidRP Client Info ≥ 1.1.0) announces: it draws passwords as stars. */
+    public static final String PASSWORD_MASK_CHANNEL = "voidrp_client_info:password_mask";
+
+    /**
+     * Whether this client hides the password in the login window. A NeoForge client
+     * announces its channels a moment into the configuration phase, so a modded client
+     * (or one with no brand yet) is given up to 1.5 s; a vanilla one is answered at once.
+     */
+    public boolean passwordMasked(PlayerConfigurationConnection connection) {
+        long deadline = System.currentTimeMillis() + 1500;
+        while (true) {
+            if (connection.getListeningPluginChannels().contains(PASSWORD_MASK_CHANNEL)) {
+                return true;
+            }
+            String brand = connection.getClientBrandName();
+            boolean modded = brand == null || brand.toLowerCase(java.util.Locale.ROOT).contains("forge");
+            if (!modded || System.currentTimeMillis() > deadline || !connection.isConnected()) {
+                return false;
+            }
+            try {
+                Thread.sleep(100);
+            } catch (InterruptedException exc) {
+                Thread.currentThread().interrupt();
+                return false;
+            }
+        }
+    }
+
     public boolean dialogsSupported(PlayerConfigurationConnection connection) {
         if (!config.preJoinDialog()) {
             return false;

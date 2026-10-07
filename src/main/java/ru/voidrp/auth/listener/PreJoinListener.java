@@ -110,9 +110,10 @@ public final class PreJoinListener implements Listener {
             return;
         }
 
+        boolean masked = plugin.passwordMasked(connection);
         boolean authenticated = state.registered()
-                ? runLogin(connection, config, nickname, ip)
-                : runRegister(connection, config, nickname, ip);
+                ? runLogin(connection, config, nickname, ip, masked)
+                : runRegister(connection, config, nickname, ip, masked);
         if (!authenticated) {
             return;
         }
@@ -127,12 +128,13 @@ public final class PreJoinListener implements Listener {
         plugin.pending().put(nickname, PendingAuth.password());
     }
 
-    private boolean runLogin(PlayerConfigurationConnection connection, AuthConfig config, String nickname, String ip) {
+    private boolean runLogin(PlayerConfigurationConnection connection, AuthConfig config, String nickname, String ip,
+                             boolean masked) {
         String error = null;
         while (connection.isConnected()) {
             final String shownError = error;
             DialogResponseView response = ask(connection, config,
-                    (dialogs, onSubmit) -> dialogs.login(nickname, shownError, onSubmit));
+                    (dialogs, onSubmit) -> dialogs.login(nickname, shownError, masked, onSubmit));
             if (response == null) {
                 return false;
             }
@@ -150,12 +152,13 @@ public final class PreJoinListener implements Listener {
         return false;
     }
 
-    private boolean runRegister(PlayerConfigurationConnection connection, AuthConfig config, String nickname, String ip) {
+    private boolean runRegister(PlayerConfigurationConnection connection, AuthConfig config, String nickname, String ip,
+                                boolean masked) {
         String error = null;
         while (connection.isConnected()) {
             final String shownError = error;
             DialogResponseView response = ask(connection, config,
-                    (dialogs, onSubmit) -> dialogs.register(nickname, shownError, onSubmit));
+                    (dialogs, onSubmit) -> dialogs.register(nickname, shownError, masked, onSubmit));
             if (response == null) {
                 return false;
             }

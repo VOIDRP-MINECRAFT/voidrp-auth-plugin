@@ -43,8 +43,15 @@ public final class AuthDialogs {
         this.config = config;
     }
 
+    /**
+     * Shown to a client that draws the password as typed: a dialog's text field has no
+     * password mode, only our client mod (VoidRP Client Info ≥ 1.1.0) puts stars there.
+     */
+    private static final String PASSWORD_VISIBLE =
+            "⚠ Пароль виден при вводе — не показывайте экран (стрим, демонстрация). В лаунчере VoidRP он скрыт звёздочками.";
+
     /** Password prompt for a nickname the site already knows. */
-    public Dialog login(String nickname, String error, Consumer<DialogResponseView> onSubmit) {
+    public Dialog login(String nickname, String error, boolean masked, Consumer<DialogResponseView> onSubmit) {
         return Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text("Вход на VoidRP"))
                         .canCloseWithEscape(false)
@@ -54,7 +61,7 @@ public final class AuthDialogs {
                                 DialogBody.plainMessage(Component.text(
                                         "Аккаунт " + nickname + " уже зарегистрирован.", NamedTextColor.GRAY), 320),
                                 DialogBody.plainMessage(Component.text(
-                                        "Введите пароль от аккаунта VoidRP.", NamedTextColor.GRAY), 320)), error))
+                                        "Введите пароль от аккаунта VoidRP.", NamedTextColor.GRAY), 320)), masked, error))
                         .inputs(List.of(password(FIELD_PASSWORD, "Пароль")))
                         .build())
                 .type(DialogType.multiAction(List.of(
@@ -65,7 +72,7 @@ public final class AuthDialogs {
     }
 
     /** Full registration, mirroring the fields of the site's form. */
-    public Dialog register(String nickname, String error, Consumer<DialogResponseView> onSubmit) {
+    public Dialog register(String nickname, String error, boolean masked, Consumer<DialogResponseView> onSubmit) {
         return Dialog.create(builder -> builder.empty()
                 .base(DialogBase.builder(Component.text("Регистрация на VoidRP"))
                         .canCloseWithEscape(false)
@@ -78,7 +85,7 @@ public final class AuthDialogs {
                                         "С ним же вы зайдёте на сайт void-rp.ru.", NamedTextColor.GRAY), 320),
                                 DialogBody.plainMessage(Component.text(
                                         "Почта только российская: mail.ru, yandex.ru, bk.ru, rambler.ru и др.",
-                                        NamedTextColor.DARK_GRAY), 320)), error))
+                                        NamedTextColor.DARK_GRAY), 320)), masked, error))
                         .inputs(List.of(
                                 DialogInput.text(FIELD_EMAIL, Component.text("Почта"))
                                         .width(300)
@@ -111,7 +118,7 @@ public final class AuthDialogs {
                                 DialogBody.plainMessage(Component.text(
                                         "Мы обновили правила проекта.", NamedTextColor.GRAY), 320),
                                 DialogBody.plainMessage(Component.text(
-                                        "Чтобы продолжить играть, примите их.", NamedTextColor.GRAY), 320)), error))
+                                        "Чтобы продолжить играть, примите их.", NamedTextColor.GRAY), 320)), true, error))
                         .inputs(List.of(
                                 checkbox(FIELD_OFFER, "Принимаю условия оферты", false),
                                 checkbox(FIELD_PERSONAL_DATA, "Согласен на обработку персональных данных", false),
@@ -138,13 +145,15 @@ public final class AuthDialogs {
                 .type(DialogType.notice()));
     }
 
-    private static List<DialogBody> bodyWithError(List<DialogBody> body, String error) {
-        if (error == null || error.isBlank()) {
-            return body;
+    private static List<DialogBody> bodyWithError(List<DialogBody> body, boolean masked, String error) {
+        List<DialogBody> out = new java.util.ArrayList<>(body);
+        if (!masked) {
+            out.add(DialogBody.plainMessage(Component.text(PASSWORD_VISIBLE, NamedTextColor.GOLD), 320));
         }
-        List<DialogBody> withError = new java.util.ArrayList<>(body);
-        withError.add(DialogBody.plainMessage(Component.text(error, NamedTextColor.RED), 320));
-        return withError;
+        if (error != null && !error.isBlank()) {
+            out.add(DialogBody.plainMessage(Component.text(error, NamedTextColor.RED), 320));
+        }
+        return out;
     }
 
     private static DialogInput password(String key, String label) {

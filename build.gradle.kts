@@ -18,7 +18,7 @@ repositories {
 
 dependencies {
     compileOnly("io.papermc.paper:paper-api:26.2.build.124-stable")
-    implementation("com.google.code.gson:gson:2.14.0")
+    implementation("com.google.code.gson:gson:2.15.0")
 }
 
 tasks.withType<JavaCompile> {
